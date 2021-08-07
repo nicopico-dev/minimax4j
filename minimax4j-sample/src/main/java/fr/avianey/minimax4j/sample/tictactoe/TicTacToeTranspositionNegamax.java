@@ -29,45 +29,37 @@ package fr.avianey.minimax4j.sample.tictactoe;
 import java.util.ArrayList;
 import java.util.List;
 
-import fr.avianey.minimax4j.ParallelMinimax;
+import fr.avianey.minimax4j.impl.TranspositionNegamax;
 
 /**
  * Simple TicTacToe IA to showcase the API. 
  * 
  * @author antoine vianey
  */
-public class TicTacToeParallelMinimax extends ParallelMinimax<TicTacToeMove> {
+public class TicTacToeTranspositionNegamax extends TranspositionNegamax<TicTacToeMove, Integer, Integer> {
 
     static final int FREE       = 0;
-    static final int PLAYER_X   = 1; // X
-    static final int PLAYER_O   = 2; // O
-    
+    static final int PLAYER_X   = 1; // X : 01
+    static final int PLAYER_O   = 2; // O : 10
+
     private static final int GRID_SIZE  = 3;
+    private static final int MAX_TURN	= GRID_SIZE * GRID_SIZE;
     
     /** The grid */
     private final int[][] grid;
     
     private int currentPlayer;
     private int turn = 0;
+    private int hash = 0;
 
-    public TicTacToeParallelMinimax(Algorithm algo) {
-        super(algo);
+    public TicTacToeTranspositionNegamax() {
+        super();
         this.grid = new int[GRID_SIZE][GRID_SIZE];
         newGame();
     }
-    
-    private TicTacToeParallelMinimax(Algorithm algo, int[][] grid, int turn, int currentPlayer) {
-        this(algo);
-        this.currentPlayer = currentPlayer;
-        this.turn = turn;
-        for (int i = 0; i < GRID_SIZE; i++) {
-            for (int j = 0; j < GRID_SIZE; j++) {
-                this.grid[i][j] = grid[i][j];
-            }
-        }
-    }
-    
+
     public void newGame() {
+    	hash = 0;
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
                 grid[i][j] = FREE;
@@ -104,7 +96,8 @@ public class TicTacToeParallelMinimax extends ParallelMinimax<TicTacToeMove> {
 
     @Override
     public void makeMove(TicTacToeMove move) {
-        grid[move.getX()][move.getY()] = currentPlayer;
+        grid[move.getX()][move.getY()] = move.getPlayer();
+        hash = hash ^ (move.getPlayer() << ((move.getX() + GRID_SIZE * move.getY()) * 2));
         turn++;
         next();
     }
@@ -112,6 +105,7 @@ public class TicTacToeParallelMinimax extends ParallelMinimax<TicTacToeMove> {
     @Override
     public void unmakeMove(TicTacToeMove move) {
         grid[move.getX()][move.getY()] = FREE;
+        hash = hash ^ (move.getPlayer() << ((move.getX() + GRID_SIZE * move.getY()) * 2));
         turn--;
         previous();
     }
@@ -165,6 +159,22 @@ public class TicTacToeParallelMinimax extends ParallelMinimax<TicTacToeMove> {
     public void previous() {
         currentPlayer = 3 - currentPlayer;
     }
+
+    /*===============================*
+     * TRANSPOSITION TABLE BACKED IA *
+     *===============================*/
+
+    @Override
+    public Integer getTranspositionKey() {
+        return hash;
+    }
+
+	@Override
+	public Integer getGroup() {
+		// as moves increase over turns
+		// we don't need to keep transposition from previous turns
+		return turn;
+	}
     
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -181,11 +191,6 @@ public class TicTacToeParallelMinimax extends ParallelMinimax<TicTacToeMove> {
         sb.append(grid[2][2] == FREE ? " " : (grid[2][2] == PLAYER_O ? "O" : "X"));
         sb.append("\n");
         return sb.toString();
-    }
-
-    @Override
-    public ParallelMinimax<TicTacToeMove> clone() {
-        return new TicTacToeParallelMinimax(getAlgorithm(), grid, turn, currentPlayer);
     }
 
 }

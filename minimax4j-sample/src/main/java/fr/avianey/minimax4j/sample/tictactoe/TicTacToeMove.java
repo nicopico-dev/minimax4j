@@ -33,7 +33,7 @@ import fr.avianey.minimax4j.Move;
  * 
  * @author antoine vianey
  */
-public class TicTacToeMove implements Move {
+public class TicTacToeMove extends Move {
 
     /** The player owning the move */
     private int player;
@@ -74,7 +74,7 @@ public class TicTacToeMove implements Move {
     }
     
     public String toString() {
-    	return (player == TicTacToeMinimax.PLAYER_O ? "O" : "X") + " (" + x + ";" + y + ")";
+    	return (player == TicTacToeNegamax.PLAYER_O ? "O" : "X") + " (" + x + ";" + y + ")";
     }
     
 }

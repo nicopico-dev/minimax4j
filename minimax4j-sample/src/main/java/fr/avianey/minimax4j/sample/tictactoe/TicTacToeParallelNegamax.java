@@ -29,15 +29,14 @@ package fr.avianey.minimax4j.sample.tictactoe;
 import java.util.ArrayList;
 import java.util.List;
 
-import fr.avianey.minimax4j.BasicMinimax;
-import fr.avianey.minimax4j.Minimax;
+import fr.avianey.minimax4j.impl.ParallelNegamax;
 
 /**
  * Simple TicTacToe IA to showcase the API. 
  * 
  * @author antoine vianey
  */
-public class TicTacToeMinimax extends BasicMinimax<TicTacToeMove> {
+public class TicTacToeParallelNegamax extends ParallelNegamax<TicTacToeMove> {
 
     static final int FREE       = 0;
     static final int PLAYER_X   = 1; // X
@@ -51,10 +50,21 @@ public class TicTacToeMinimax extends BasicMinimax<TicTacToeMove> {
     private int currentPlayer;
     private int turn = 0;
 
-    public TicTacToeMinimax(Algorithm algo) {
-        super(algo);
+    public TicTacToeParallelNegamax() {
+        super();
         this.grid = new int[GRID_SIZE][GRID_SIZE];
         newGame();
+    }
+    
+    private TicTacToeParallelNegamax(int[][] grid, int turn, int currentPlayer) {
+        this();
+        this.currentPlayer = currentPlayer;
+        this.turn = turn;
+        for (int i = 0; i < GRID_SIZE; i++) {
+            for (int j = 0; j < GRID_SIZE; j++) {
+                this.grid[i][j] = grid[i][j];
+            }
+        }
     }
     
     public void newGame() {
@@ -171,6 +181,11 @@ public class TicTacToeMinimax extends BasicMinimax<TicTacToeMove> {
         sb.append(grid[2][2] == FREE ? " " : (grid[2][2] == PLAYER_O ? "O" : "X"));
         sb.append("\n");
         return sb.toString();
+    }
+
+    @Override
+    public ParallelNegamax<TicTacToeMove> clone() {
+        return new TicTacToeParallelNegamax(grid, turn, currentPlayer);
     }
 
 }

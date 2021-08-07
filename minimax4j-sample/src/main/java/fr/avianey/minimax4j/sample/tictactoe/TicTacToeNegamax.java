@@ -29,37 +29,33 @@ package fr.avianey.minimax4j.sample.tictactoe;
 import java.util.ArrayList;
 import java.util.List;
 
-import fr.avianey.minimax4j.TranspositionMinimax;
+import fr.avianey.minimax4j.impl.Negamax;
 
 /**
  * Simple TicTacToe IA to showcase the API. 
  * 
  * @author antoine vianey
  */
-public class TicTacToeTranspositionMinimax extends TranspositionMinimax<TicTacToeMove, Integer, Integer> {
+public class TicTacToeNegamax extends Negamax<TicTacToeMove> {
 
     static final int FREE       = 0;
-    static final int PLAYER_X   = 1; // X : 01
-    static final int PLAYER_O   = 2; // O : 10
-
+    static final int PLAYER_X   = 1; // X
+    static final int PLAYER_O   = 2; // O
+    
     private static final int GRID_SIZE  = 3;
-    private static final int MAX_TURN	= GRID_SIZE * GRID_SIZE;
     
     /** The grid */
     private final int[][] grid;
     
     private int currentPlayer;
     private int turn = 0;
-    private int hash = 0;
 
-    public TicTacToeTranspositionMinimax(Algorithm algo) {
-        super(algo);
+    public TicTacToeNegamax() {
         this.grid = new int[GRID_SIZE][GRID_SIZE];
         newGame();
     }
     
     public void newGame() {
-    	hash = 0;
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
                 grid[i][j] = FREE;
@@ -96,8 +92,7 @@ public class TicTacToeTranspositionMinimax extends TranspositionMinimax<TicTacTo
 
     @Override
     public void makeMove(TicTacToeMove move) {
-        grid[move.getX()][move.getY()] = move.getPlayer();
-        hash = hash ^ (move.getPlayer() << ((move.getX() + GRID_SIZE * move.getY()) * 2));
+        grid[move.getX()][move.getY()] = currentPlayer;
         turn++;
         next();
     }
@@ -105,7 +100,6 @@ public class TicTacToeTranspositionMinimax extends TranspositionMinimax<TicTacTo
     @Override
     public void unmakeMove(TicTacToeMove move) {
         grid[move.getX()][move.getY()] = FREE;
-        hash = hash ^ (move.getPlayer() << ((move.getX() + GRID_SIZE * move.getY()) * 2));
         turn--;
         previous();
     }
@@ -159,49 +153,6 @@ public class TicTacToeTranspositionMinimax extends TranspositionMinimax<TicTacTo
     public void previous() {
         currentPlayer = 3 - currentPlayer;
     }
-
-    /*===============================*
-     * TRANSPOSITION TABLE BACKED IA *
-     *===============================*/
-
-	@Override
-	public Integer getTransposition() {
-		return hash;
-	}
-
-	@Override
-	public Integer getGroup() {
-		// as moves increase over turns
-		// we don't need to keep transposition from previous turns
-		return turn;
-	}
-	
-	@Override
-    public boolean clearGroupsAfterSearch() {
-		// remove useless transposition after search
-		// groups reflect turns and as players can't
-		// go back on a move in the next turn, 
-		// transpositions from previous turns are useless
-    	return true;
-    }
-	
-	@Override
-	public TicTacToeMove getBestMove(int depth) {
-		TicTacToeMove move = super.getBestMove(depth);
-		// clear the content of the transposition table
-		// unless it reached the max depth... if not
-		// using a known transposition value will lead to a loss
-		// of search depth as we will use the result of an evaluation
-		// with a lower depth of prediction !
-		// we may have used informations from the transposition table
-		// to order available moves as an optimization for alpha-beta cut-off
-		if (turn + depth < MAX_TURN) {
-			// use with caution
-			super.clearTranspositionTable();
-		}
-//		super.clearTranspositionTable();
-		return move;
-	}
     
     public String toString() {
         StringBuilder sb = new StringBuilder();
